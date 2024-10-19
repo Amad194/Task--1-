@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Define the MySQL service
   mysql:
     image: mysql:8.0
     container_name: mysql-db
@@ -15,12 +14,11 @@ services:
     volumes:
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
-      - app-network
+      - app_network
 
-  # Define the Node.js service
   app:
     build:
-      context: .  # Ensure the Dockerfile is in the current directory
+      context: ./app
     container_name: node-app
     ports:
       - "3000:3000"
@@ -32,8 +30,8 @@ services:
     depends_on:
       - mysql
     networks:
-      - app-network
+      - app_network
 
 networks:
-  app-network:
+  app_network: # Changed from app-network to app_network
     driver: bridge

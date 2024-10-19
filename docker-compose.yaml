@@ -18,8 +18,8 @@ services:
 
   app:
     build:
-      context: .
-    container_name: node-app
+      context: ./  # Ensure that the build context is set to the current directory
+    container_name: node_app # Remove hyphen, changed to underscore
     ports:
       - "3000:3000"
     environment:
@@ -33,5 +33,5 @@ services:
       - app_network
 
 networks:
-  app_network: # Changed from app-network to app_network
+  app_network:
     driver: bridge

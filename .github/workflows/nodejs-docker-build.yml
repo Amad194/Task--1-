@@ -1,0 +1,62 @@
+name: Node.js Docker Build and Drift Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: releases_db
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Set up Docker Compose
+        run: |
+          docker-compose --version
+          docker-compose up -d
+
+      - name: Wait for MySQL to be ready
+        run: |
+          until docker-compose exec mysql mysql -uuser -ppassword -e "SHOW DATABASES;" > /dev/null 2>&1; do
+            echo "Waiting for MySQL to be ready..."
+            sleep 5
+          done
+
+      - name: Run Drift Detection API test
+        run: |
+          echo "Waiting for the app to be ready..."
+          sleep 15  # Ensure the app has enough time to start
+
+          # Test the /drift endpoint and log the output
+          drift_result=$(curl --silent http://localhost:3000/drift)
+          echo "Drift Detection API Result:"
+          echo "$drift_result"
+
+      - name: Shut down Docker Compose
+        run: docker-compose down

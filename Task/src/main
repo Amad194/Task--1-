@@ -1,0 +1,136 @@
+const express = require("express");
+const mysql = require("mysql2");
+const bodyParser = require("body-parser");
+const CreateRelease = require("./models/CreateRelease");
+const ListReleases = require("./models/ListReleases");
+const { authenticateAPIKey } = require("./middleware");
+const authenticateJWT = require("./auth/jsonwebtoken");
+require("dotenv").config();
+
+const app = express();
+const port = 3000;
+
+// Middleware to parse JSON bodies
+app.use(bodyParser.json());
+
+// MySQL database connection
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_DATABASE,
+});
+
+// Connect to the database
+db.connect((err) => {
+  if (err) {
+    console.error("Error connecting to the database:", err);
+    return;
+  }
+  console.log("Connected to the MySQL database.");
+});
+
+// Route to create a new release
+const createReleaseRoute = (db) => (req, res) => {
+  let createRelease;
+
+  try {
+    createRelease = new CreateRelease(req.body);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  const query =
+    "INSERT INTO releases (name, version, account, region) VALUES (?, ?, ?, ?)";
+  db.query(
+    query,
+    [
+      createRelease.name,
+      createRelease.version,
+      createRelease.account,
+      createRelease.region,
+    ],
+    (err, result) => {
+      if (err) {
+        console.error("Error inserting release:", err);
+        return res.status(500).json({ error: "Failed to create release." });
+      }
+      res.status(201).json({
+        message: "Release created successfully.",
+        releaseId: result.insertId,
+      });
+    }
+  );
+};
+
+// Route to get all releases with pagination
+const listReleasesRoute = (db) => (req, res) => {
+  let listReleases;
+
+  try {
+    listReleases = new ListReleases(req.query);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  const query =
+    "SELECT * FROM releases ORDER BY created_at DESC LIMIT ? OFFSET ?";
+  db.query(query, [listReleases.limit, listReleases.offset], (err, results) => {
+    if (err) {
+      console.error("Error fetching releases:", err);
+      return res.status(500).json({ error: "Failed to fetch releases." });
+    }
+    res.status(200).json(results);
+  });
+};
+
+// Route to detect drift in application deployments
+const detectDriftRoute = (db) => async (req, res) => {
+  const query =
+    "SELECT name, version, account, region, created_at FROM releases ORDER BY created_at DESC";
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error fetching releases:", err);
+      return res.status(500).json({ error: "Failed to fetch releases." });
+    }
+
+    const applications = {};
+
+    results.forEach((release) => {
+      const { name, version, account, region } = release;
+
+      if (!applications[name]) {
+        applications[name] = { latest: version, drift: {} };
+      }
+
+      if (version !== applications[name].latest) {
+        if (!applications[name].drift[account]) {
+          applications[name].drift[account] = {};
+        }
+        applications[name].drift[account][region] = version;
+      }
+    });
+
+    const driftedApplications = Object.keys(applications)
+      .filter((app) => Object.keys(applications[app].drift).length > 0)
+      .map((app) => ({
+        [app]: {
+          latest: applications[app].latest,
+          drift: applications[app].drift,
+        },
+      }));
+
+    res.status(200).json(driftedApplications);
+  });
+};
+
+// Inject dependencies into routes
+app.post("/release", authenticateAPIKey, createReleaseRoute(db));
+app.get("/releases", authenticateAPIKey, listReleasesRoute(db));
+app.get("/drift", authenticateJWT, authenticateAPIKey, detectDriftRoute(db));
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

@@ -19,7 +19,8 @@ services:
 
   # Define the Node.js service
   app:
-    build: .
+    build:
+      context: .  # Ensure the Dockerfile is in the current directory
     container_name: node-app
     ports:
       - "3000:3000"

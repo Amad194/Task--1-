@@ -13,11 +13,13 @@ services:
       - "3306:3306"
     volumes:
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
 
   app:
     build:
-      context: ./  # Ensure that the build context is set to the current directory
-    container_name: node_app # Remove hyphen, changed to underscore
+      context: .
+    container_name: node_app
     ports:
       - "3000:3000"
     environment:
@@ -27,3 +29,10 @@ services:
       DB_DATABASE: releases_db
     depends_on:
       - mysql
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    name: custom_app_network  # Explicitly define a network name
+    driver: bridge

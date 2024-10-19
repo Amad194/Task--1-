@@ -1,37 +1,32 @@
-version: '3.8'
-
+version: '3'
 services:
+  node:
+    image: node:18
+    container_name: node-app
+    working_dir: /usr/src/app
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mysql
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASSWORD=root_password
+      - DB_NAME=app_db
+    command: sh -c "npm install && npm start"
+
   mysql:
-    image: mysql:8.0
+    image: mysql:8
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: releases_db
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: app_db
     ports:
       - "3306:3306"
     volumes:
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - app_network
+      - mysql_data:/var/lib/mysql
 
-  app:
-    build:
-      context: .
-    container_name: node-app
-    ports:
-      - "3000:3000"
-    environment:
-      DB_HOST: mysql
-      DB_USER: user
-      DB_PASSWORD: password
-      DB_DATABASE: releases_db
-    depends_on:
-      - mysql
-    networks: 
-      - app_network
-
-networks:
-  app_network:
-    driver: bridge
+volumes:
+  mysql_data:

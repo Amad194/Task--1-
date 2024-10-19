@@ -18,7 +18,7 @@ services:
 
   app:
     build:
-      context: ./app
+      context: .
     container_name: node-app
     ports:
       - "3000:3000"

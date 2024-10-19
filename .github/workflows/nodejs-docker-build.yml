@@ -46,7 +46,7 @@ jobs:
       
       - name: Start Docker Compose
         run: |
-          docker-compose up -d
+          docker-compose up
           
       - name: Wait for MySQL to be ready
         run: |

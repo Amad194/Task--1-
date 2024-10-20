@@ -14,15 +14,15 @@ services:
       - DB_HOST=mysql
       - DB_USER=root
       - DB_PASSWORD=root_password
-      - DB_NAME=app_db
+      - DB_NAME=releases_db
     command: sh -c "npm install && npm start"
 
   mysql:
     image: mysql:8
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: app_db
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: releases_db
     ports:
       - "3307:3306"
     volumes:

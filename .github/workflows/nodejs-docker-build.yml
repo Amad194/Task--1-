@@ -46,12 +46,12 @@ jobs:
           docker-compose --version
           docker-compose up -d
       
-#      - name: Wait for MySQL to be ready
-#        run: |
-#         until docker-compose exec mysql mysql -uuser -ppassword -e "SHOW DATABASES;" > /dev/null 2>&1; do
-#          echo "Waiting for MySQL to be ready..."
-#          sleep 5
-#          done
+      - name: Wait for MySQL to be ready
+        run: |
+         until docker-compose exec mysql mysql -uuser -ppassword -e "SHOW DATABASES;" > /dev/null 2>&1; do
+          echo "Waiting for MySQL to be ready..."
+          sleep 5
+          done
 
       - name: Wait for the app to be ready
         run: |

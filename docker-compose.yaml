@@ -16,6 +16,8 @@ services:
       - DB_PASSWORD=root_password
       - DB_NAME=releases_db
     command: sh -c "npm install && npm start"
+    networks:
+      - app_network
 
   mysql:
     image: mysql:8
@@ -27,6 +29,13 @@ services:
       - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
 
 volumes:
   mysql_data:
+
+networks:
+  app_network:
+    name: custom_app_network  
+    driver: bridge

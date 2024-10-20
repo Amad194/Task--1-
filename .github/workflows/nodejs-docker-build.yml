@@ -53,15 +53,16 @@ jobs:
 #          sleep 5
 #          done
 
-      - name: Run Drift Detection API test
+      - name: Wait for the app to be ready
         run: |
-          echo "Waiting for the app to be ready..."
-          sleep 15  # Ensure the app has enough time to start
+            echo "Waiting for the app to be ready..."
+            sleep 30  # Increase sleep time if necessary
 
-          # Test the /drift endpoint and log the output
-          drift_result=$(curl --silent http://localhost:3000/drift)
-          echo "Drift Detection API Result:"
-          echo "$drift_result"
+            # Test the /drift endpoint and log the output
+            drift_result=$(curl --silent --write-out "HTTPSTATUS:%{http_code}" -o /dev/null http://localhost:3000/drift)
+            echo "Drift Detection API Result:"
+            echo "$drift_result"
+
 
       - name: Shut down Docker Compose
         run: docker-compose down

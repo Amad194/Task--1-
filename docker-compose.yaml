@@ -13,7 +13,7 @@ services:
     environment:
       - DB_HOST=mysql
       - DB_USER=root
-      - DB_PASSWORD=root_password
+      - DB_PASSWORD=rootpassword
       - DB_NAME=releases_db
     command: sh -c "npm install && npm start"
     networks:
